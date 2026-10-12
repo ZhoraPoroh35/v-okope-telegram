@@ -1,0 +1,414 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>В окопе — Военная стратегия</title>
+<style>
+:root {
+  --bg:#11150f; --panel:#1d2419; --panel2:#272f21;
+  --line:#46513a; --text:#eee8d5; --muted:#a9b099;
+  --green:#737f4c; --gold:#d6bd7b; --red:#a64e43;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  font:15px Arial,sans-serif;
+}
+button { font:inherit; cursor:pointer; }
+button:disabled { opacity:.4; cursor:not-allowed; }
+header {
+  padding:18px 16px; text-align:center; background:#171d13;
+  border-bottom:1px solid var(--line);
+}
+header h1 { margin:0; color:var(--gold); letter-spacing:4px; }
+header p { margin:7px 0 0; color:var(--muted); font-size:12px; }
+main { max-width:760px; margin:auto; padding:16px 14px 95px; }
+.panel {
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:9px; padding:16px; margin-bottom:13px;
+}
+h2 { font-size:17px; margin:0 0 13px; }
+h3 { font-size:14px; margin:0 0 7px; }
+.muted { color:var(--muted); font-size:13px; }
+.row { display:flex; gap:12px; align-items:center; }
+.between { display:flex; justify-content:space-between; gap:10px; align-items:center; }
+.portrait {
+  width:76px; height:76px; flex-shrink:0; border-radius:8px;
+  display:grid; place-items:center; font-size:40px;
+  background:linear-gradient(145deg,#46523a,#20271b);
+  border:1px solid #647052;
+}
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+.stat { padding:10px 5px; text-align:center; background:var(--panel2); border-radius:6px; }
+.stat strong { display:block; font-size:18px; margin-top:5px; }
+.bar { height:8px; background:#080b08; border-radius:5px; overflow:hidden; margin-top:6px; }
+.fill { height:100%; transition:width .2s; }
+.hp { background:#8b5546; } .energy { background:#899b57; } .xp { background:#c0a15d; }
+.actions { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; }
+.btn {
+  border:1px solid #69764b; background:var(--green); color:white;
+  border-radius:6px; padding:12px 10px; font-weight:bold;
+}
+.btn.secondary { background:#30392a; border-color:#4d5940; }
+.btn.danger { background:#673c32; border-color:#895448; }
+.btn.full { width:100%; }
+.tabs {
+  position:fixed; bottom:0; left:0; right:0; z-index:5;
+  display:flex; justify-content:center; background:#171d13;
+  border-top:1px solid var(--line); padding:7px 4px;
+}
+.tabs button {
+  flex:1; max-width:150px; padding:9px 3px; border:0;
+  color:var(--muted); background:transparent; font-size:12px;
+}
+.tabs button.active { color:var(--gold); background:#2a3223; border-radius:6px; }
+.item {
+  display:flex; align-items:center; gap:10px; padding:12px 0;
+  border-bottom:1px solid #343d2c;
+}
+.item:last-child { border-bottom:0; }
+.item-icon { font-size:25px; width:36px; text-align:center; }
+.item-info { flex:1; min-width:0; }
+.item button { padding:8px; font-size:12px; }
+.log {
+  background:#11160f; border-radius:6px; padding:12px;
+  line-height:1.6; font-size:13px; max-height:180px; overflow:auto;
+}
+.notice { color:var(--gold); }
+.hidden { display:none !important; }
+@media(min-width:600px) {
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+  .two-col .panel { margin-bottom:0; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>В ОКОПЕ</h1>
+  <p>ВОЕННАЯ СТРАТЕГИЯ · ПРОТОТИП</p>
+</header>
+
+<main>
+  <section id="profile" class="screen">
+    <div class="panel">
+      <div class="row">
+        <div class="portrait">🪖</div>
+        <div style="flex:1">
+          <div class="muted">БОЕЦ · УРОВЕНЬ <span id="level">1</span></div>
+          <h2 style="margin:6px 0" id="name">Новобранец</h2>
+          <div class="muted">Звание: <span id="rank">Рядовой</span></div>
+          <div class="muted">Опыт: <span id="xpText">0 / 100</span></div>
+          <div class="bar"><div id="xpBar" class="fill xp" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">❤️ Здоровье<strong id="hpText">100 / 100</strong></div>
+        <div class="stat">⚡ Энергия<strong id="energyText">5 / 5</strong></div>
+        <div class="stat">🪙 Монеты<strong id="coins">100</strong></div>
+      </div>
+      <div style="margin-top:14px" class="muted">Здоровье</div>
+      <div class="bar"><div id="hpBar" class="fill hp" style="width:100%"></div></div>
+      <div style="margin-top:12px" class="muted">Энергия</div>
+      <div class="bar"><div id="energyBar" class="fill energy" style="width:100%"></div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h2>🎯 Боевое задание</h2>
+        <p id="missionText">На передовой замечен противник. Подготовься к бою.</p>
+        <button class="btn full" onclick="startBattle()">ВЫЙТИ В БОЙ</button>
+        <p class="muted">За победу ты получишь опыт и монеты. Бой расходует 1 энергию.</p>
+      </div>
+      <div class="panel">
+        <h2>🎒 Снаряжение</h2>
+        <div class="item">
+          <div class="item-icon">🔫</div>
+          <div class="item-info"><h3 id="weaponName">Старая винтовка</h3><div class="muted">Урон: <span id="weaponDamage">15</span></div></div>
+        </div>
+        <div class="item">
+          <div class="item-icon">🦺</div>
+          <div class="item-info"><h3 id="armorName">Полевой жилет</h3><div class="muted">Защита: <span id="armorDefense">2</span></div></div>
+        </div>
+        <button class="btn secondary full" onclick="showScreen('shop')">УЛУЧШИТЬ СНАРЯЖЕНИЕ</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>📋 Журнал событий</h2>
+      <div class="log" id="log">Ты прибыл на базу. Впереди первые задания.</div>
+    </div>
+  </section>
+
+  <section id="battle" class="screen hidden">
+    <div class="panel">
+      <h2>⚔️ Поле боя</h2>
+      <p class="muted">Учебное сражение. Победа принесёт награду.</p>
+      <div class="row" style="margin:22px 0">
+        <div class="portrait">🪖</div>
+        <div style="flex:1">
+          <h3>Твой боец</h3>
+          <div id="battlePlayerHp">Здоровье: 100 / 100</div>
+          <div class="bar"><div id="battlePlayerBar" class="fill hp" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="row" style="margin:22px 0">
+        <div class="portrait">👤</div>
+        <div style="flex:1">
+          <h3 id="enemyName">Разведчик противника</h3>
+          <div id="enemyHp">Здоровье: 50 / 50</div>
+          <div class="bar"><div id="enemyBar" class="fill hp" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="attackBtn" onclick="attack()">⚔️ АТАКОВАТЬ</button>
+        <button class="btn secondary" onclick="retreat()">ОТСТУПИТЬ</button>
+      </div>
+      <div class="log" id="battleLog" style="margin-top:14px">Противник приближается.</div>
+    </div>
+  </section>
+
+  <section id="inventory" class="screen hidden">
+    <div class="panel">
+      <h2>🎒 Инвентарь</h2>
+      <p class="muted">Предметы, доступные твоему бойцу.</p>
+      <div class="item"><div class="item-icon">🔫</div><div class="item-info"><h3 id="invWeapon">Старая винтовка</h3><div class="muted">Текущее оружие</div></div></div>
+      <div class="item"><div class="item-icon">🦺</div><div class="item-info"><h3 id="invArmor">Полевой жилет</h3><div class="muted">Текущая броня</div></div></div>
+      <div class="item"><div class="item-icon">🩹</div><div class="item-info"><h3>Аптечка</h3><div class="muted">Восстанавливает 30 здоровья</div><div style="margin-top:8px">В наличии: <span id="medkits">1</span></div></div><button class="btn" onclick="useMedkit()">ИСПОЛЬЗОВАТЬ</button></div>
+    </div>
+  </section>
+
+  <section id="shop" class="screen hidden">
+    <div class="panel">
+      <h2>🏚️ Военный склад</h2>
+      <p class="muted">Покупай улучшения за монеты.</p>
+      <div class="item">
+        <div class="item-icon">🔫</div>
+        <div class="item-info"><h3>Армейский автомат</h3><div class="muted">Урон +10 · Цена: 80 монет</div></div>
+        <button class="btn" id="weaponBuy" onclick="buyWeapon()">КУПИТЬ</button>
+      </div>
+      <div class="item">
+        <div class="item-icon">🦺</div>
+        <div class="item-info"><h3>Усиленный бронежилет</h3><div class="muted">Защита +3 · Цена: 60 монет</div></div>
+        <button class="btn" id="armorBuy" onclick="buyArmor()">КУПИТЬ</button>
+      </div>
+      <div class="item">
+        <div class="item-icon">🩹</div>
+        <div class="item-info"><h3>Аптечка</h3><div class="muted">+1 аптечка · Цена: 25 монет</div></div>
+        <button class="btn" onclick="buyMedkit()">КУПИТЬ</button>
+      </div>
+      <button class="btn secondary full" onclick="showScreen('profile')" style="margin-top:12px">НАЗАД НА БАЗУ</button>
+    </div>
+  </section>
+
+  <section id="tasks" class="screen hidden">
+    <div class="panel">
+      <h2>📜 Задания</h2>
+      <div class="item"><div class="item-icon">🎯</div><div class="item-info"><h3>Первый бой</h3><div class="muted">Победи одного противника.</div><div id="taskOneStatus" class="notice">Награда: 50 монет</div></div></div>
+      <div class="item"><div class="item-icon">⭐</div><div class="item-info"><h3>Опытный боец</h3><div class="muted">Достигни 2 уровня.</div><div id="taskTwoStatus" class="notice">Награда: 100 монет</div></div></div>
+      <p class="muted">Задания отслеживаются автоматически. Награды выдаются один раз.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button class="active" data-screen="profile" onclick="showScreen('profile')">🪖 База</button>
+  <button data-screen="inventory" onclick="showScreen('inventory')">🎒 Инвентарь</button>
+  <button data-screen="shop" onclick="showScreen('shop')">🏚️ Склад</button>
+  <button data-screen="tasks" onclick="showScreen('tasks')">📜 Задания</button>
+</nav>
+
+<script>
+const SAVE_KEY = "okopePrototypeV1";
+const initialState = {
+  level:1, xp:0, coins:100, hp:100, energy:5,
+  weapon:0, armor:0, medkits:1, wins:0,
+  taskOne:false, taskTwo:false
+};
+let state = {...initialState};
+let enemy = null;
+let inBattle = false;
+let battleEnded = false;
+
+const weapons = [
+  {name:"Старая винтовка",damage:15},
+  {name:"Армейский автомат",damage:25}
+];
+const armors = [
+  {name:"Полевой жилет",defense:2},
+  {name:"Усиленный бронежилет",defense:5}
+];
+
+function save() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+}
+function load() {
+  try {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) state = {...initialState,...JSON.parse(saved)};
+  } catch (e) {
+    state = {...initialState};
+  }
+}
+function logMessage(message) {
+  const el = document.getElementById("log");
+  el.innerHTML = message + "<br>" + el.innerHTML;
+}
+function showScreen(screen) {
+  if (inBattle && screen !== "battle") return;
+  document.querySelectorAll(".screen").forEach(el => el.classList.add("hidden"));
+  document.getElementById(screen).classList.remove("hidden");
+  document.querySelectorAll(".tabs button").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.screen === screen));
+  render();
+}
+function render() {
+  const maxHp = 100;
+  document.getElementById("level").textContent = state.level;
+  document.getElementById("xpText").textContent = `${state.xp} / ${state.level*100}`;
+  document.getElementById("xpBar").style.width = `${Math.min(100,state.xp/(state.level*100)*100)}%`;
+  document.getElementById("coins").textContent = state.coins;
+  document.getElementById("hpText").textContent = `${state.hp} / ${maxHp}`;
+  document.getElementById("hpBar").style.width = `${state.hp/maxHp*100}%`;
+  document.getElementById("energyText").textContent = `${state.energy} / 5`;
+  document.getElementById("energyBar").style.width = `${state.energy/5*100}%`;
+  document.getElementById("rank").textContent = state.level>=5?"Ветеран":state.level>=3?"Ефрейтор":"Рядовой";
+  document.getElementById("weaponName").textContent = weapons[state.weapon].name;
+  document.getElementById("weaponDamage").textContent = weapons[state.weapon].damage;
+  document.getElementById("armorName").textContent = armors[state.armor].name;
+  document.getElementById("armorDefense").textContent = armors[state.armor].defense;
+  document.getElementById("invWeapon").textContent = weapons[state.weapon].name;
+  document.getElementById("invArmor").textContent = armors[state.armor].name;
+  document.getElementById("medkits").textContent = state.medkits;
+  document.getElementById("weaponBuy").disabled = state.weapon>0 || state.coins<80;
+  document.getElementById("weaponBuy").textContent = state.weapon>0?"КУПЛЕНО":"КУПИТЬ";
+  document.getElementById("armorBuy").disabled = state.armor>0 || state.coins<60;
+  document.getElementById("armorBuy").textContent = state.armor>0?"КУПЛЕНО":"КУПИТЬ";
+  document.getElementById("taskOneStatus").textContent = state.taskOne?"Выполнено ✓":"Награда: 50 монет";
+  document.getElementById("taskTwoStatus").textContent = state.taskTwo?"Выполнено ✓":"Награда: 100 монет";
+}
+function startBattle() {
+  if (state.energy<1) {
+    alert("Недостаточно энергии. Вернись позже.");
+    return;
+  }
+  state.energy--;
+  enemy = {hp:50,maxHp:50,damage:12,name:"Разведчик противника"};
+  inBattle = true;
+  battleEnded = false;
+  document.getElementById("enemyName").textContent = enemy.name;
+  document.getElementById("battleLog").textContent = "Бой начался! Выбери действие.";
+  document.getElementById("attackBtn").disabled = false;
+  showScreen("battle");
+  renderBattle();
+  save();
+}
+function renderBattle() {
+  if (!enemy) return;
+  document.getElementById("battlePlayerHp").textContent = `Здоровье: ${state.hp} / 100`;
+  document.getElementById("battlePlayerBar").style.width = `${state.hp}%`;
+  document.getElementById("enemyHp").textContent = `Здоровье: ${Math.max(0,enemy.hp)} / ${enemy.maxHp}`;
+  document.getElementById("enemyBar").style.width = `${Math.max(0,enemy.hp)/enemy.maxHp*100}%`;
+}
+function battleMessage(message) {
+  const el = document.getElementById("battleLog");
+  el.innerHTML = message + "<br>" + el.innerHTML;
+}
+function attack() {
+  if (!inBattle || battleEnded) return;
+  const damage = weapons[state.weapon].damage;
+  enemy.hp -= damage;
+  battleMessage(`Ты нанёс ${damage} урона.`);
+  if (enemy.hp<=0) {
+    enemy.hp=0;
+    battleEnded=true;
+    inBattle=false;
+    state.wins++;
+    state.coins+=40;
+    state.xp+=50;
+    state.hp=Math.min(100,state.hp+10);
+    battleMessage("Победа! Награда: 40 монет, 50 опыта. +10 здоровья.");
+    checkLevel();
+    checkTasks();
+    document.getElementById("attackBtn").disabled=true;
+    renderBattle();
+    render();
+    save();
+    return;
+  }
+  const received = Math.max(1,enemy.damage-armors[state.armor].defense);
+  state.hp=Math.max(0,state.hp-received);
+  battleMessage(`Противник нанёс ${received} урона.`);
+  if (state.hp<=0) {
+    state.hp=50;
+    battleEnded=true;
+    inBattle=false;
+    battleMessage("Боец выведен из строя. Медики вернули тебя на базу с 50 здоровьем.");
+    document.getElementById("attackBtn").disabled=true;
+    setTimeout(()=>showScreen("profile"),800);
+  }
+  renderBattle();
+  render();
+  save();
+}
+function retreat() {
+  if (!inBattle) {
+    showScreen("profile");
+    return;
+  }
+  inBattle=false;
+  battleEnded=true;
+  logMessage("Ты отступил с поля боя. Энергия за вылазку не возвращена.");
+  showScreen("profile");
+  save();
+}
+function checkLevel() {
+  while (state.xp>=state.level*100) {
+    state.xp-=state.level*100;
+    state.level++;
+    state.coins+=25;
+    logMessage(`Повышен уровень! Теперь твой уровень: ${state.level}. Бонус: 25 монет.`);
+  }
+}
+function checkTasks() {
+  if (!state.taskOne && state.wins>=1) {
+    state.taskOne=true;
+    state.coins+=50;
+    logMessage("Задание выполнено: первый бой. Бонус: 50 монет.");
+  }
+  if (!state.taskTwo && state.level>=2) {
+    state.taskTwo=true;
+    state.coins+=100;
+    logMessage("Задание выполнено: опытный боец. Бонус: 100 монет.");
+  }
+}
+function buyWeapon() {
+  if (state.weapon>0 || state.coins<80) return;
+  state.coins-=80; state.weapon=1;
+  logMessage("Ты купил армейский автомат.");
+  render(); save();
+}
+function buyArmor() {
+  if (state.armor>0 || state.coins<60) return;
+  state.coins-=60; state.armor=1;
+  logMessage("Ты купил усиленный бронежилет.");
+  render(); save();
+}
+function buyMedkit() {
+  if (state.coins<25) { alert("Недостаточно монет."); return; }
+  state.coins-=25; state.medkits++;
+  logMessage("Ты купил аптечку.");
+  render(); save();
+}
+function useMedkit() {
+  if (state.medkits<1) { alert("Аптечек нет."); return; }
+  if (state.hp>=100) { alert("Здоровье уже полное."); return; }
+  state.medkits--; state.hp=Math.min(100,state.hp+30);
+  logMessage("Использована аптечка. Восстановлено до 30 здоровья.");
+  render(); save();
+}
+load();
+render();
+</script>
+</body>
+</html>
