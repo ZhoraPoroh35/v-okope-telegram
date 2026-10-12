@@ -118,6 +118,12 @@ h3 { font-size:14px; margin:0 0 7px; }
       <div class="panel">
         <h2>🎯 Боевое задание</h2>
         <p id="missionText">На передовой замечен противник. Подготовься к бою.</p>
+        <div style="background:#11160f;border:1px solid #343d2c;border-radius:6px;padding:12px;margin:12px 0">
+          <div class="between"><strong id="previewEnemyName">Разведчик противника</strong><span id="previewEnemyIcon">👤</span></div>
+          <p class="muted" id="previewEnemyDescription" style="margin:8px 0">Лёгкий противник. Подходит для первой вылазки.</p>
+          <div class="muted">Здоровье: <strong id="previewEnemyHp">50</strong> · Урон: <strong id="previewEnemyDamage">12</strong></div>
+          <div class="muted" style="margin-top:5px">Награда: 🪙 <span id="previewEnemyCoins">40</span> монет · ⭐ <span id="previewEnemyXp">50</span> опыта</div>
+        </div>
         <button class="btn full" onclick="startBattle()">ВЫЙТИ В БОЙ</button>
         <p class="muted">За победу ты получишь опыт и монеты. Бой расходует 1 энергию.</p>
       </div>
@@ -264,6 +270,14 @@ function showScreen(screen) {
 }
 function render() {
   const maxHp = 100;
+  const nextEnemy = getNextEnemy();
+  document.getElementById("previewEnemyName").textContent = nextEnemy.name;
+  document.getElementById("previewEnemyIcon").textContent = nextEnemy.icon;
+  document.getElementById("previewEnemyDescription").textContent = nextEnemy.description;
+  document.getElementById("previewEnemyHp").textContent = nextEnemy.maxHp;
+  document.getElementById("previewEnemyDamage").textContent = nextEnemy.damage;
+  document.getElementById("previewEnemyCoins").textContent = nextEnemy.rewardCoins;
+  document.getElementById("previewEnemyXp").textContent = nextEnemy.rewardXp;
   document.getElementById("level").textContent = state.level;
   document.getElementById("xpText").textContent = `${state.xp} / ${state.level*100}`;
   document.getElementById("xpBar").style.width = `${Math.min(100,state.xp/(state.level*100)*100)}%`;
@@ -287,28 +301,43 @@ function render() {
   document.getElementById("taskOneStatus").textContent = state.taskOne?"Выполнено ✓":"Награда: 50 монет";
   document.getElementById("taskTwoStatus").textContent = state.taskTwo?"Выполнено ✓":"Награда: 100 монет";
 }
+const enemyTypes = [
+  {
+    name:"Разведчик противника", icon:"👤",
+    description:"Лёгкий противник. Хороший выбор для первых вылазок.",
+    hp:50, damage:12, rewardCoins:40, rewardXp:50
+  },
+  {
+    name:"Штурмовик противника", icon:"🎖️",
+    description:"Более выносливый враг с сильной ответной атакой.",
+    hp:70, damage:15, rewardCoins:55, rewardXp:65
+  },
+  {
+    name:"Ветеран противника", icon:"☠️",
+    description:"Опасный опытный боец. Награда выше, но и риск больше.",
+    hp:90, damage:18, rewardCoins:75, rewardXp:80
+  }
+];
+
+function getNextEnemy() {
+  const tier = Math.min(enemyTypes.length - 1, Math.floor(state.wins / 3));
+  const template = enemyTypes[tier];
+  const scaling = Math.max(0, state.level - 1) * 5;
+  return {
+    ...template,
+    maxHp: template.hp + scaling,
+    hp: template.hp + scaling,
+    damage: template.damage + Math.floor(Math.max(0, state.level - 1) / 2)
+  };
+}
+
 function startBattle() {
   if (state.energy<1) {
     alert("Недостаточно энергии. Вернись позже.");
     return;
   }
   state.energy--;
-
-  // Противники становятся сильнее по мере побед и роста уровня.
-  const enemies = [
-    {name:"Разведчик противника", hp:50, damage:12, rewardCoins:40, rewardXp:50},
-    {name:"Штурмовик противника", hp:70, damage:15, rewardCoins:55, rewardXp:65},
-    {name:"Ветеран противника", hp:90, damage:18, rewardCoins:75, rewardXp:80}
-  ];
-  const tier = Math.min(enemies.length - 1, Math.floor(state.wins / 3));
-  const template = enemies[tier];
-  const scaling = Math.max(0, state.level - 1) * 5;
-  enemy = {
-    ...template,
-    maxHp: template.hp + scaling,
-    hp: template.hp + scaling,
-    damage: template.damage + Math.floor(Math.max(0, state.level - 1) / 2)
-  };
+  enemy = getNextEnemy();
 
   inBattle = true;
   battleEnded = false;
