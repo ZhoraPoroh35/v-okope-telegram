@@ -1,486 +1,86 @@
-
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>В окопе — Военная стратегия</title>
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>В окопе — реконструкция</title>
 <style>
-:root {
-  --bg:#11150f; --panel:#1d2419; --panel2:#272f21;
-  --line:#46513a; --text:#eee8d5; --muted:#a9b099;
-  --green:#737f4c; --gold:#d6bd7b; --red:#a64e43;
-}
-* { box-sizing:border-box; }
-body {
-  margin:0; background:var(--bg); color:var(--text);
-  font:15px Arial,sans-serif;
-}
-button { font:inherit; cursor:pointer; }
-button:disabled { opacity:.4; cursor:not-allowed; }
-header {
-  padding:18px 16px; text-align:center; background:#171d13;
-  border-bottom:1px solid var(--line);
-}
-header h1 { margin:0; color:var(--gold); letter-spacing:4px; }
-header p { margin:7px 0 0; color:var(--muted); font-size:12px; }
-main { max-width:760px; margin:auto; padding:16px 14px 95px; }
-.panel {
-  background:var(--panel); border:1px solid var(--line);
-  border-radius:9px; padding:16px; margin-bottom:13px;
-}
-h2 { font-size:17px; margin:0 0 13px; }
-h3 { font-size:14px; margin:0 0 7px; }
-.muted { color:var(--muted); font-size:13px; }
-.row { display:flex; gap:12px; align-items:center; }
-.between { display:flex; justify-content:space-between; gap:10px; align-items:center; }
-.portrait {
-  width:76px; height:76px; flex-shrink:0; border-radius:8px;
-  display:grid; place-items:center; font-size:40px;
-  background:linear-gradient(145deg,#46523a,#20271b);
-  border:1px solid #647052;
-}
-.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
-.stat { padding:10px 5px; text-align:center; background:var(--panel2); border-radius:6px; }
-.stat strong { display:block; font-size:18px; margin-top:5px; }
-.bar { height:8px; background:#080b08; border-radius:5px; overflow:hidden; margin-top:6px; }
-.fill { height:100%; transition:width .2s; }
-.hp { background:#8b5546; } .energy { background:#899b57; } .xp { background:#c0a15d; }
-.actions { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; }
-.btn {
-  border:1px solid #69764b; background:var(--green); color:white;
-  border-radius:6px; padding:12px 10px; font-weight:bold;
-}
-.btn.secondary { background:#30392a; border-color:#4d5940; }
-.btn.danger { background:#673c32; border-color:#895448; }
-.btn.full { width:100%; }
-.tabs {
-  position:fixed; bottom:0; left:0; right:0; z-index:5;
-  display:flex; justify-content:center; background:#171d13;
-  border-top:1px solid var(--line); padding:7px 4px;
-}
-.tabs button {
-  flex:1; max-width:150px; padding:9px 3px; border:0;
-  color:var(--muted); background:transparent; font-size:12px;
-}
-.tabs button.active { color:var(--gold); background:#2a3223; border-radius:6px; }
-.item {
-  display:flex; align-items:center; gap:10px; padding:12px 0;
-  border-bottom:1px solid #343d2c;
-}
-.item:last-child { border-bottom:0; }
-.item-icon { font-size:25px; width:36px; text-align:center; }
-.item-info { flex:1; min-width:0; }
-.item button { padding:8px; font-size:12px; }
-.log {
-  background:#11160f; border-radius:6px; padding:12px;
-  line-height:1.6; font-size:13px; max-height:180px; overflow:auto;
-}
-.notice { color:var(--gold); }
-.hidden { display:none !important; }
-@media(min-width:600px) {
-  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
-  .two-col .panel { margin-bottom:0; }
-}
-</style>
-</head>
-<body>
-<header>
-  <h1>В ОКОПЕ</h1>
-  <p>ВОЕННАЯ СТРАТЕГИЯ · ПРОТОТИП</p>
-</header>
-
-<main>
-  <section id="profile" class="screen">
-    <div class="panel">
-      <div class="row">
-        <div class="portrait">🪖</div>
-        <div style="flex:1">
-          <div class="muted">БОЕЦ · УРОВЕНЬ <span id="level">1</span></div>
-          <h2 style="margin:6px 0" id="name">Новобранец</h2>
-          <div class="muted">Звание: <span id="rank">Рядовой</span></div>
-          <div class="muted">Опыт: <span id="xpText">0 / 100</span></div>
-          <div class="bar"><div id="xpBar" class="fill xp" style="width:0%"></div></div>
-        </div>
-      </div>
-      <div class="stats">
-        <div class="stat">❤️ Здоровье<strong id="hpText">100 / 100</strong></div>
-        <div class="stat">⚡ Энергия<strong id="energyText">5 / 5</strong></div>
-        <div class="stat">🪙 Монеты<strong id="coins">100</strong></div>
-      </div>
-      <div style="margin-top:14px" class="muted">Здоровье</div>
-      <div class="bar"><div id="hpBar" class="fill hp" style="width:100%"></div></div>
-      <div style="margin-top:12px" class="muted">Энергия</div>
-      <div class="bar"><div id="energyBar" class="fill energy" style="width:100%"></div></div>
-    </div>
-
-    <div class="two-col">
-      <div class="panel">
-        <h2>🎯 Боевое задание</h2>
-        <p id="missionText">На передовой замечен противник. Подготовься к бою.</p>
-        <div style="background:#11160f;border:1px solid #343d2c;border-radius:6px;padding:12px;margin:12px 0">
-          <div class="between"><strong id="previewEnemyName">Разведчик противника</strong><span id="previewEnemyIcon">👤</span></div>
-          <p class="muted" id="previewEnemyDescription" style="margin:8px 0">Лёгкий противник. Подходит для первой вылазки.</p>
-          <div class="muted">Здоровье: <strong id="previewEnemyHp">50</strong> · Урон: <strong id="previewEnemyDamage">12</strong></div>
-          <div class="muted" style="margin-top:5px">Награда: 🪙 <span id="previewEnemyCoins">40</span> монет · ⭐ <span id="previewEnemyXp">50</span> опыта</div>
-        </div>
-        <button class="btn full" onclick="startBattle()">ВЫЙТИ В БОЙ</button>
-        <p class="muted">За победу ты получишь опыт и монеты. Бой расходует 1 энергию.</p>
-      </div>
-      <div class="panel">
-        <h2>🎒 Снаряжение</h2>
-        <div class="item">
-          <div class="item-icon">🔫</div>
-          <div class="item-info"><h3 id="weaponName">Старая винтовка</h3><div class="muted">Урон: <span id="weaponDamage">15</span></div></div>
-        </div>
-        <div class="item">
-          <div class="item-icon">🦺</div>
-          <div class="item-info"><h3 id="armorName">Полевой жилет</h3><div class="muted">Защита: <span id="armorDefense">2</span></div></div>
-        </div>
-        <button class="btn secondary full" onclick="showScreen('shop')">УЛУЧШИТЬ СНАРЯЖЕНИЕ</button>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>📋 Журнал событий</h2>
-      <div class="log" id="log">Ты прибыл на базу. Впереди первые задания.</div>
-    </div>
-  </section>
-
-  <section id="battle" class="screen hidden">
-    <div class="panel">
-      <h2>⚔️ Поле боя</h2>
-      <p class="muted">Учебное сражение. Победа принесёт награду.</p>
-      <div class="row" style="margin:22px 0">
-        <div class="portrait">🪖</div>
-        <div style="flex:1">
-          <h3>Твой боец</h3>
-          <div id="battlePlayerHp">Здоровье: 100 / 100</div>
-          <div class="bar"><div id="battlePlayerBar" class="fill hp" style="width:100%"></div></div>
-        </div>
-      </div>
-      <div class="row" style="margin:22px 0">
-        <div class="portrait">👤</div>
-        <div style="flex:1">
-          <h3 id="enemyName">Разведчик противника</h3>
-          <div id="enemyHp">Здоровье: 50 / 50</div>
-          <div class="bar"><div id="enemyBar" class="fill hp" style="width:100%"></div></div>
-        </div>
-      </div>
-      <div class="actions">
-        <button class="btn" id="attackBtn" onclick="attack()">⚔️ АТАКОВАТЬ</button>
-        <button class="btn secondary" onclick="retreat()">ОТСТУПИТЬ</button>
-      </div>
-      <div class="log" id="battleLog" style="margin-top:14px">Противник приближается.</div>
-    </div>
-  </section>
-
-  <section id="inventory" class="screen hidden">
-    <div class="panel">
-      <h2>🎒 Инвентарь</h2>
-      <p class="muted">Предметы, доступные твоему бойцу.</p>
-      <div class="item"><div class="item-icon">🔫</div><div class="item-info"><h3 id="invWeapon">Старая винтовка</h3><div class="muted">Текущее оружие</div></div></div>
-      <div class="item"><div class="item-icon">🦺</div><div class="item-info"><h3 id="invArmor">Полевой жилет</h3><div class="muted">Текущая броня</div></div></div>
-      <div class="item"><div class="item-icon">🩹</div><div class="item-info"><h3>Аптечка</h3><div class="muted">Восстанавливает 30 здоровья</div><div style="margin-top:8px">В наличии: <span id="medkits">1</span></div></div><button class="btn" onclick="useMedkit()">ИСПОЛЬЗОВАТЬ</button></div>
-    </div>
-  </section>
-
-  <section id="shop" class="screen hidden">
-    <div class="panel">
-      <h2>🏚️ Военный склад</h2>
-      <p class="muted">Покупай улучшения за монеты.</p>
-      <div class="item">
-        <div class="item-icon">🔫</div>
-        <div class="item-info"><h3>Армейский автомат</h3><div class="muted">Урон: 25 · Цена: 80 монет</div></div>
-        <button class="btn" id="weaponBuy" onclick="buyWeapon(1)">КУПИТЬ</button>
-      </div>
-      <div class="item">
-        <div class="item-icon">🎯</div>
-        <div class="item-info"><h3>Штурмовая винтовка</h3><div class="muted">Урон: 35 · Цена: 180 монет</div></div>
-        <button class="btn" id="weaponBuy2" onclick="buyWeapon(2)">КУПИТЬ</button>
-      </div>
-      <div class="item">
-        <div class="item-icon">🦺</div>
-        <div class="item-info"><h3>Усиленный бронежилет</h3><div class="muted">Защита: 5 · Цена: 60 монет</div></div>
-        <button class="btn" id="armorBuy" onclick="buyArmor(1)">КУПИТЬ</button>
-      </div>
-      <div class="item">
-        <div class="item-icon">🛡️</div>
-        <div class="item-info"><h3>Тактический бронежилет</h3><div class="muted">Защита: 8 · Цена: 150 монет</div></div>
-        <button class="btn" id="armorBuy2" onclick="buyArmor(2)">КУПИТЬ</button>
-      </div>
-      <div class="item">
-        <div class="item-icon">🩹</div>
-        <div class="item-info"><h3>Аптечка</h3><div class="muted">+1 аптечка · Цена: 25 монет</div></div>
-        <button class="btn" onclick="buyMedkit()">КУПИТЬ</button>
-      </div>
-      <button class="btn secondary full" onclick="showScreen('profile')" style="margin-top:12px">НАЗАД НА БАЗУ</button>
-    </div>
-  </section>
-
-  <section id="tasks" class="screen hidden">
-    <div class="panel">
-      <h2>📜 Задания</h2>
-      <div class="item"><div class="item-icon">🎯</div><div class="item-info"><h3>Первый бой</h3><div class="muted">Победи одного противника.</div><div id="taskOneStatus" class="notice">Награда: 50 монет</div></div></div>
-      <div class="item"><div class="item-icon">⭐</div><div class="item-info"><h3>Опытный боец</h3><div class="muted">Достигни 2 уровня.</div><div id="taskTwoStatus" class="notice">Награда: 100 монет</div></div></div>
-      <p class="muted">Задания отслеживаются автоматически. Награды выдаются один раз.</p>
-    </div>
-  </section>
-</main>
-
-<nav class="tabs">
-  <button class="active" data-screen="profile" onclick="showScreen('profile')">🪖 База</button>
-  <button data-screen="inventory" onclick="showScreen('inventory')">🎒 Инвентарь</button>
-  <button data-screen="shop" onclick="showScreen('shop')">🏚️ Склад</button>
-  <button data-screen="tasks" onclick="showScreen('tasks')">📜 Задания</button>
-</nav>
-
+:root{--bg:#151714;--panel:#272822;--panel2:#3a3327;--gold:#c7a15b;--cream:#e4d4ae;--red:#8d2d1e;--red2:#b34a2a;--green:#6f8d56;--line:#6a5738}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#33372e,#111310 75%);color:#eee1c4;font:14px Georgia,'Times New Roman',serif}button{font:inherit;cursor:pointer;color:#271a0d;border:1px solid #d1ad65;background:linear-gradient(#e4c47e,#a87536);padding:8px 12px;border-radius:3px;box-shadow:inset 0 1px #ffe5a6}button:hover{filter:brightness(1.12)}button:disabled{opacity:.4;cursor:not-allowed} .game{max-width:1080px;margin:14px auto;border:2px solid #624326;background:#1c1e19;box-shadow:0 0 40px #000;min-height:700px}.top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px;background:linear-gradient(#a94b26,#672514);border-bottom:3px solid #4b2a18}.brand{font-weight:bold;letter-spacing:2px;margin-right:auto;font-size:18px}.resource{background:#3d291a;border:1px solid #c28b44;padding:5px 8px;border-radius:3px;white-space:nowrap}.resource b{color:#ffdf8d}.layout{display:grid;grid-template-columns:54px 1fr;min-height:640px}.rail{background:#28231b;border-right:2px solid #713c24;padding:8px 5px;display:flex;flex-direction:column;gap:7px}.rail button{padding:0;width:36px;height:36px;border-radius:50%;font-size:18px;background:radial-gradient(#ffe5a0,#955b2d);border:2px solid #68401f}.main{padding:10px;min-width:0}.hero{height:250px;position:relative;border:2px solid #55432a;background:linear-gradient(90deg,#34392e 0 10%,#20241f 10% 12%,#36392d 12% 22%,#22251f 22% 24%,#393b30 24% 36%,#22251f 36% 38%,#393a2d 38% 50%,#22251f 50% 52%,#383a2e 52% 65%,#22251f 65% 67%,#34372c 67%);overflow:hidden;display:flex;align-items:center;justify-content:center}.hero:before{content:'';position:absolute;left:4%;top:9%;width:21%;height:70%;border:6px ridge #77745a;border-radius:110px 110px 0 0;background:linear-gradient(135deg,#b7b18b,#676f5d,#343e35);box-shadow:inset 0 0 15px #171b16}.hero:after{content:'';position:absolute;bottom:0;left:28%;right:25%;height:20%;background:linear-gradient(#63543a,#211e18);clip-path:polygon(5% 0,100% 0,95% 100%,0 100%);border-top:3px solid #998052}.commander{font-size:86px;filter:drop-shadow(3px 5px 2px #000);z-index:1}.herolabel{position:absolute;top:14px;left:34%;font-size:11px;color:#d8bd79;letter-spacing:1px}.companion{position:absolute;right:3%;top:12%;width:19%;border:1px solid #78613a;background:#28271e;padding:9px;font-size:12px;z-index:2}.bar{height:7px;background:#171510;border:1px solid #806b43;margin:8px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,#b44a2a,#e5b85b)}.tabs{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0;background:linear-gradient(#a74a27,#672616);padding:5px;border:1px solid #a66b3b}.tabs button{padding:7px 10px;font-size:12px}.tabs button.active{background:linear-gradient(#f4e0a8,#c79c51);outline:2px solid #4a2a17}.screen{display:none}.screen.active{display:block}.notice{background:#e0d0a8;color:#3a2816;padding:12px;border:2px solid #76522c;margin-bottom:10px}.notice h3{margin:0 0 8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}.card{border:1px solid #6c5737;background:linear-gradient(#363329,#22231d);padding:12px;min-width:0}.card h3{margin:0 0 8px;color:#e5c579;font-size:16px}.muted{color:#b7a887;font-size:12px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.pill{display:inline-block;padding:3px 6px;background:#51402a;border:1px solid #8b6a3e;font-size:11px}.frontmap{background:linear-gradient(135deg,#77745b,#a59a70 45%,#4e5948);padding:18px;border:3px ridge #75603c;min-height:250px;position:relative;color:#2a2519;overflow:hidden}.frontmap:before{content:'〰  〰     ╱╲     〰     ▰  ▰';position:absolute;inset:10px;font-size:32px;opacity:.2;line-height:2.4;word-spacing:30px;pointer-events:none}.nodes{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}.node{width:95px;min-height:74px;border-radius:50%;border:3px solid #8d6d3c;background:radial-gradient(#e9d39b,#a48a53);display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column;font-weight:bold;padding:8px}.node.done{background:radial-gradient(#c4d3a0,#62794a)}.node.locked{filter:grayscale(1);opacity:.7}.battle{border:3px ridge #76613c;background:linear-gradient(145deg,#77775d,#9a906b 42%,#4e5c4a);padding:10px;color:#201d14}.battlehead{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;background:#332c20;color:#ead8ac;padding:8px;margin-bottom:8px}.field{display:grid;grid-template-columns:repeat(8,minmax(24px,1fr));gap:3px}.tile{aspect-ratio:1;border:1px solid #605b42;background:linear-gradient(135deg,#8d8c68,#666c50);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3vw,27px);position:relative;padding:0}.tile:nth-child(8n+3),.tile:nth-child(8n+4){background:#6b7b79}.tile.cover{background:#77705a}.tile.selected{outline:3px solid #f6df79;z-index:2}.tile.enemy{background:#816252}.tile:disabled{opacity:1;cursor:pointer}.units{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.unit{background:#29261d;color:#e8d8ad;border:1px solid #a47b41;padding:7px;min-width:100px;text-align:left}.unit.selected{outline:2px solid #f1d67d;background:#4c3c25}.log{background:#201f19;color:#c9ba91;padding:8px;min-height:45px;margin-top:8px;border:1px solid #635134}.progress{height:12px;background:#161712;border:1px solid #705a34}.progress span{display:block;height:100%;background:linear-gradient(90deg,#718b50,#d7b65f)}.footer{font-size:11px;color:#a99b7c;padding:8px;border-top:1px solid #57442d;margin-top:10px}.itemicon{font-size:30px;margin:4px 0}.big{font-size:22px;color:#e9c876}.hidden{display:none!important}@media(max-width:600px){.game{margin:0;border:0}.layout{grid-template-columns:42px 1fr}.rail button{width:30px;height:30px}.main{padding:6px}.hero{height:210px}.companion{width:26%;font-size:10px}.field{grid-template-columns:repeat(8,minmax(20px,1fr))}.top{gap:4px}.brand{width:100%}}
+</style></head><body><div class="game"><header class="top"><div class="brand">⚔ В ОКОПЕ</div><div class="resource">★ <b id="glory">0</b></div><div class="resource">✚ <b id="parts">120</b></div><div class="resource">▣ <b id="ammo">30</b></div><div class="resource">🥫 <b id="food">20</b></div><div class="resource">⛽ <b id="fuel">15</b></div><div class="resource">✚ <b id="meds">10</b></div><button id="helpBtn">?</button></header><div class="layout"><nav class="rail"><button data-screen="hq" title="Штаб">⌂</button><button data-screen="campaign" title="Фронты">⚑</button><button data-screen="boss" title="Боссы">♜</button><button data-screen="upgrades" title="Улучшения">⚙</button><button data-screen="arsenal" title="Арсенал">▤</button><button data-screen="rewards" title="Награды">★</button><button data-screen="missions" title="Миссии">☷</button></nav><main class="main"><section class="hero"><div class="herolabel">ШТАБ — ТРАНСПОРТНЫЙ САМОЛЁТ</div><div class="commander">🪖</div><div class="companion"><b>СОПРОВОЖДЕНИЕ</b><p>✈ Самолёт снабжения</p><div class="bar"><i id="escortBar" style="width:65%"></i></div><div>Уровень: <b id="escortLevel">1</b></div><button data-action="escort">Улучшить</button></div></section><div class="tabs"><button data-screen="hq" class="active">ШТАБ</button><button data-screen="campaign">ФРОНТЫ</button><button data-screen="boss">БОССЫ</button><button data-screen="upgrades">УЛУЧШЕНИЯ</button><button data-screen="rewards">НАГРАДЫ</button><button data-screen="missions">ЗАДАНИЯ</button><button data-screen="arsenal">АРСЕНАЛ</button></div>
+<section id="hq" class="screen active"><div class="notice"><h3>СРОЧНЫЕ ПРИКАЗЫ</h3>Командир, выбери операцию и подготовь отряды. Это реконструкция интерфейса по архивным скриншотам, декоративная графика и игровые параметры частично условные.<p><button data-screen="campaign">ОТКРЫТЬ ФРОНТ</button> <button data-screen="battle">ПРОДОЛЖИТЬ БОЙ</button></p></div><div class="grid"><article class="card"><h3>🎖 Командир</h3><div class="big">Уровень <span id="level">1</span></div><p class="muted">Опыт: <span id="xp">0</span> / <span id="xpNeed">100</span></p><div class="progress"><span id="xpBar" style="width:0%"></span></div></article><article class="card"><h3>🪖 Боевые отряды</h3><p>Пехота, разведка и бронетехника.</p><p>Боеспособность: <b id="strength">100</b></p><button data-screen="battle">В БОЙ</button></article><article class="card"><h3>📦 Снабжение</h3><p>Боеприпасы, продовольствие, медикаменты и топливо.</p><button data-screen="arsenal">ОТКРЫТЬ АРСЕНАЛ</button></article><article class="card"><h3>💾 Сохранение</h3><p class="muted">Прогресс хранится в этом браузере. Можно скачать резервную копию, чтобы не потерять кампанию.</p><button id="exportSave">СКАЧАТЬ СОХРАНЕНИЕ</button> <button id="importSave">ЗАГРУЗИТЬ СОХРАНЕНИЕ</button><input id="saveFile" type="file" accept="application/json,.json" class="hidden"></article></div></section>
+<section id="campaign" class="screen"><div class="notice"><h3>ФРОНТЫ И ОПЕРАЦИИ</h3>Захватывай сектора по цепочке. Победа открывает следующий участок. <span class="muted">Точные оригинальные условия кампании не сохранились; здесь используется игровая реконструкция.</span></div><div class="row" id="frontSelect"></div><h3 id="frontTitle">Фронт «Ржев»</h3><div class="frontmap"><div class="nodes" id="nodes"></div></div><div class="row" style="margin-top:10px"><button id="startMission">НАЧАТЬ ОПЕРАЦИЮ</button><span id="missionInfo" class="muted"></span></div></section>
+<section id="battle" class="screen"><div class="battle"><div class="battlehead"><b id="battleTitle">ОПЕРАЦИЯ «КРИК»</b><span>Ход: <b id="turn">1</b></span><span>Враги: <b id="enemyCount">3</b></span><span>Цель: уничтожить противника</span><span>Патроны: <b id="battleAmmo">30</b></span></div><div id="field" class="field"></div><div class="units" id="units"></div><div class="row"><button id="moveMode">ПЕРЕМЕЩЕНИЕ</button><button id="attackMode">АТАКА</button><button id="endTurn">ЗАВЕРШИТЬ ХОД</button><button id="retreat">ОТСТУПИТЬ</button></div><div class="log" id="battleLog">Выбери карточку отряда внизу, затем режим действия и клетку. Клетки с укрытием отмечены штриховкой.</div></div></section>
+<section id="boss" class="screen"><div class="notice"><h3>БОСС: ТЕОДОР</h3>Тяжёлая бронетехника противника. Ослабление босса за ресурсы — условная механика реконструкции.</div><div class="grid"><article class="card"><div class="itemicon">🛡️</div><h3>Теодор</h3><p>Прочность: <b id="bossHpText">1000 / 1000</b></p><div class="progress"><span id="bossHpBar" style="width:100%"></span></div><p>Награда за победу: 500 XP, 25 славы и детали.</p><button id="weakenBoss">ОСЛАБИТЬ (30 деталей)</button> <button id="fightBoss">В БОЙ</button></article><article class="card"><h3>Тактика</h3><p>Подготовь боеприпасы и улучшай отряды перед боем.</p><button data-screen="upgrades">УЛУЧШИТЬ ОТРЯДЫ</button></article></div></section>
+<section id="upgrades" class="screen"><div class="notice"><h3>УЛУЧШЕНИЯ И ПРИКАЗЫ</h3>Улучшения увеличивают силу отрядов. Цена повышается с каждым уровнем.</div><div class="grid" id="upgradeCards"></div></section>
+<section id="arsenal" class="screen"><div class="notice"><h3>АРСЕНАЛ И СНАБЖЕНИЕ</h3>Покупай припасы за детали. Недостаток ресурсов может мешать вести бой.</div><div class="grid" id="shop"></div></section>
+<section id="rewards" class="screen"><div class="notice"><h3>НАГРАДЫ</h3>История полученных наград и достижений.</div><div class="grid" id="rewardList"></div></section>
+<section id="missions" class="screen"><div class="notice"><h3>ЗАДАНИЯ</h3>Выполняй боевые задачи и забирай награды.</div><div class="grid" id="missionList"></div></section>
+<div class="footer">Автосохранение включено для этого браузера. Это фанатская реконструкция, неофициальный проект; оригинальные сервер, баланс и часть ресурсов недоступны. <button id="reset" style="float:right;padding:4px 7px">Сбросить прогресс</button></div></main></div></div>
 <script>
-const SAVE_KEY = "okopePrototypeV1";
-const initialState = {
-  level:1, xp:0, coins:100, hp:100, energy:5,
-  weapon:0, armor:0, medkits:1, wins:0,
-  taskOne:false, taskTwo:false
-};
-let state = {...initialState};
-let enemy = null;
-let inBattle = false;
-let battleEnded = false;
+(()=>{'use strict';const KEY='okope_reconstruction_final_v1';const initial=()=>({log:[],glory:0,parts:120,ammo:30,food:20,fuel:15,meds:10,level:1,xp:0,escort:1,front:0,sector:0,unlocked:0,won:[],bossHp:1000,bossWon:false,up:{infantry:1,scout:1,tank:1},activeUnit:0,turn:1,mode:'move',battleStarted:false,enemies:[],units:[],rewards:[],claimed:[],kills:0,missionsDone:0});let s;try{s={...initial(),...JSON.parse(localStorage.getItem(KEY)||'{}')};if(s.unlocked===undefined)s.unlocked=Math.max(0,(s.front||0)*6+(s.sector||0));s.front=Math.max(0,Math.min(4,Number(s.front)||0));s.sector=Math.max(0,Math.min(5,Number(s.sector)||0));s.unlocked=Math.max(0,Math.min(30,Number(s.unlocked)||0));s.won=Array.isArray(s.won)?s.won:[];s.rewards=Array.isArray(s.rewards)?s.rewards:[];s.claimed=Array.isArray(s.claimed)?s.claimed:[];s.up={...initial().up,...(s.up||{})};s.log=Array.isArray(s.log)?s.log.slice(0,30):[];delete s.equipmentOwned;delete s.loadout;['glory','parts','ammo','food','fuel','meds','level','xp','escort','kills','missionsDone'].forEach(k=>{s[k]=Math.max(0,Number(s[k])||0)});s.bossHp=Math.max(0,Math.min(1000,Number.isFinite(Number(s.bossHp))?Number(s.bossHp):1000));if(!Array.isArray(s.units)||!Array.isArray(s.enemies)){s.units=[];s.enemies=[];s.battleStarted=false}}catch(e){s=initial()}const $=id=>document.getElementById(id);const fronts=[{name:'Ржев',nodes:['Крик','Приготовление','Разведка','Переправа','Высота','Штурм']},{name:'Смоленск',nodes:['Передовая','Склад','Дорога','Укрепление','Контратака','Прорыв']},{name:'Орёл',nodes:['Застава','Лесополоса','Перекрёсток','Артпозиция','Прорыв','Штурм']},{name:'Берлин',nodes:['Окраина','Рубеж','Плацдарм','Центр','Последний рубеж','Финальный штурм']},{name:'Победа',nodes:['Передовые позиции','Подступы','Окружение','Прорыв обороны','Последний бой','Победа']}];const unitDefs=[{id:'infantry',name:'Пехота',icon:'🪖',hp:100,damage:22,cost:40},{id:'scout',name:'Разведка',icon:'🔭',hp:75,damage:16,cost:35},{id:'tank',name:'Танк Т-34',icon:'🚜',hp:150,damage:35,cost:65}];const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){};render()};function note(t){$('battleLog').textContent=t}function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));if(id==='battle'&&!s.battleStarted)startBattle();render()}function addReward(title,desc){s.rewards.unshift({title,desc,date:new Date().toLocaleDateString('ru-RU')})}function gainXP(n){s.xp+=n;while(s.xp>=s.level*100){s.xp-=s.level*100;s.level++;s.parts+=20;s.glory+=5;addReward('Новый уровень','Уровень '+s.level+'; +20 деталей, +5 славы')}}function showLog(){
+  const entries=Array.isArray(s.log)?s.log:[];
+  const body=entries.length?entries.map(x=>`<div style="padding:6px 0;border-bottom:1px solid #39424a"><small style="color:#aeb9c4">${x.time||''}</small><div>${String(x.message||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}</div></div>`).join(''):'<p>Событий пока нет. Начни сражение, чтобы появилась история.</p>';
+  const modal=document.createElement('div');modal.style='position:fixed;inset:0;background:#000b;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML=`<div style="max-width:520px;width:100%;max-height:80vh;overflow:auto;background:#202932;color:#f4f4f4;border:1px solid #59636d;border-radius:10px;padding:16px"><h3 style="margin-top:0">Журнал событий</h3>${body}<button id="closeLog" style="margin-top:12px;padding:8px 14px">Закрыть</button></div>`;
+  document.body.appendChild(modal);modal.querySelector('#closeLog').onclick=()=>modal.remove();modal.onclick=e=>{if(e.target===modal)modal.remove();};
+}
+function runSelfCheck(){
+  const uniqueIds=list=>Array.isArray(list)&&new Set(list.map(x=>x&&x.id)).size===list.length;
+  const checks=[
+    ['Ресурсы', ['parts','glory','ammo','food','fuel','meds'].every(k=>Number.isFinite(Number(s[k]))&&Number(s[k])>=0)],
+    ['Кампания', Number.isInteger(Number(s.front))&&Number(s.front)>=0&&Number(s.front)<=4&&Number.isInteger(Number(s.sector))&&Number(s.sector)>=0&&Number(s.sector)<=5],
+    ['Отряды',Array.isArray(s.units)&&s.units.every(u=>u&&Number.isFinite(Number(u.hp))&&Number.isFinite(Number(u.pos)))],
+    ['Противники',Array.isArray(s.enemies)&&s.enemies.every(e=>e&&Number.isFinite(Number(e.hp))&&Number.isFinite(Number(e.pos)))],
+    ['Уникальность отрядов',uniqueIds(s.units)],
+    ['Уникальность противников',uniqueIds(s.enemies)],
+    ['Позиции на поле',Array.isArray(s.units)&&Array.isArray(s.enemies)&&[...s.units,...s.enemies].every(x=>Number.isInteger(Number(x.pos))&&Number(x.pos)>=0&&Number(x.pos)<64)],
+    ['Здоровье бойцов',Array.isArray(s.units)&&Array.isArray(s.enemies)&&[...s.units,...s.enemies].every(x=>Number.isFinite(Number(x.hp))&&Number(x.hp)>=0)],
+    ['Улучшения',!!s.up&&typeof s.up==='object'&&!Array.isArray(s.up)],
+    ['Ходы отрядов',Array.isArray(s.units)&&s.units.every(u=>typeof u.moved==='boolean'&&typeof u.attacked==='boolean')]
+  ];
+  const failed=checks.filter(x=>!x[1]);
+  toast(failed.length?'Самопроверка: проблемы — '+failed.map(x=>x[0]).join(', '):'Самопроверка пройдена: ресурсы, кампания, позиции и боевые данные в порядке');
+  return failed.length===0;
+}
+function addLog(message){
+  if(!Array.isArray(s.log))s.log=[];
+  s.log.unshift({time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),message:String(message)});
+  s.log=s.log.slice(0,30);
+  try{localStorage.setItem('okope_reconstruction_log_v1',JSON.stringify(s.log));}catch(e){}
+}
+function normalizeGameState(){
+  ['parts','glory','ammo','food','fuel','meds','xp','glory'].forEach(k=>{
+    if(k in s){const n=Number(s[k]);s[k]=Number.isFinite(n)?Math.max(0,n):0;}
+  });
+  if(!Number.isFinite(Number(s.front)))s.front=0;
+  if(!Number.isFinite(Number(s.sector)))s.sector=0;
+  if(!Number.isFinite(Number(s.unlocked)))s.unlocked=0;
+  s.front=Math.max(0,Math.min(4,Math.floor(Number(s.front))));
+  s.sector=Math.max(0,Math.min(5,Math.floor(Number(s.sector))));
+  s.unlocked=Math.max(0,Math.min(30,Math.floor(Number(s.unlocked))));
+  if(!Array.isArray(s.units))s.units=[];
+  if(!Array.isArray(s.enemies))s.enemies=[];
+  if(!s.up||typeof s.up!=='object'||Array.isArray(s.up))s.up={};
+  Object.keys(s.up).forEach(k=>{const n=Number(s.up[k]);s.up[k]=Number.isFinite(n)?Math.max(1,Math.min(10,Math.floor(n))):1;});
+}
+function render(){normalizeGameState();['glory','parts','ammo','food','fuel','meds','level','xp','escort'].forEach(k=>{let el=$(k);if(el)el.textContent=s[k]});$('xpNeed').textContent=s.level*100;$('xpBar').style.width=(s.xp/(s.level*100)*100)+'%';$('strength').textContent=unitDefs.reduce((a,u)=>a+u.damage*s.up[u.type||u.id],0);$('escortLevel').textContent=s.escort;$('escortBar').style.width=Math.min(100,40+s.escort*10)+'%';renderCampaign();renderUnits();renderShop();renderUpgrades();renderRewards();renderMissions();renderBoss();$('turn').textContent=s.turn;$('enemyCount').textContent=s.enemies.filter(e=>e.hp>0).length;let ba=$('battleAmmo');if(ba)ba.textContent=s.ammo}
+function renderCampaign(){ $('frontSelect').innerHTML=fronts.map((f,i)=>`<button data-front="${i}" ${i>Math.min(4,Math.floor((s.unlocked??0)/6))?'disabled':''}>${f.name}</button>`).join('');$('frontTitle').textContent='Фронт «'+fronts[s.front].name+'»';$('nodes').innerHTML=fronts[s.front].nodes.map((n,i)=>{let global=s.front*6+i,done=s.won.includes(global),locked=global>(s.unlocked??s.sector);return `<button class="node ${done?'done':''} ${locked?'locked':''}" data-node="${i}" ${locked?'disabled':''}><span>${done?'✓':locked?'🔒':'⚑'}</span><b>${n}</b><small>${done?'Захвачен':locked?'Закрыт':'Сектор '+(i+1)}</small></button>`}).join('');$('missionInfo').textContent=(s.unlocked>=30?'КАМПАНИЯ ЗАВЕРШЕНА · ':'Доступно секторов: '+Math.min(30,(s.unlocked??s.sector)+1)+' · ')+'Захвачено: '+s.won.length;$('startMission').textContent=s.unlocked>=30?'КАМПАНИЯ ЗАВЕРШЕНА':'НАЧАТЬ ОПЕРАЦИЮ';$('startMission').disabled=s.unlocked>=30}
+function renderUnits(){if(!s.units.length){$('units').innerHTML='';if($('field'))$('field').innerHTML='';return}$('units').innerHTML=s.units.map((u,i)=>`<button class="unit ${s.activeUnit===i?'selected':''}" data-unit="${i}" ${u.hp<=0?'disabled':''}>${u.icon} ${u.name}<br>♥ ${Math.max(0,u.hp)} / ${u.maxHp}<br><small>Урон ${u.damage}</small></button>`).join('');if(s.battleStarted)renderField()}
+function normalizeBattleState(){
+  const liveUnitIds=new Set(s.units.filter(u=>u.hp>0).map(u=>u.id));
+  if(s.selectedUnit&&!liveUnitIds.has(s.selectedUnit))s.selectedUnit=null;
+  const liveEnemyIds=new Set(s.enemies.filter(e=>e.hp>0).map(e=>e.id));
+  if(s.selectedEnemy&&!liveEnemyIds.has(s.selectedEnemy))s.selectedEnemy=null;
+}
+function renderField(){let f=$('field');if(!f)return;let cells='';for(let i=0;i<64;i++){let u=s.units.find(x=>x.hp>0&&x.pos===i),e=s.enemies.find(x=>x.hp>0&&x.pos===i),terrain=[10,11,26,27,44,45].includes(i);cells+=`<button class="tile ${terrain?'cover':''} ${u&&s.units[s.activeUnit]===u?'selected':''} ${e?'enemy':''}" data-cell="${i}" aria-label="Клетка ${i+1}">${u?u.icon:e?e.icon:terrain?'▥':''}</button>`}$('field').innerHTML=cells;$('enemyCount').textContent=s.enemies.filter(e=>e.hp>0).length;let ba=$('battleAmmo');if(ba)ba.textContent=s.ammo}
+function startBattle(boss=false){if(s.battleStarted&&s.enemies.some(e=>e.hp>0))return;s.battleStarted=true;s.victoryProcessed=false;addLog('Начато новое сражение');s.turn=1;s.mode='move';s.selectedUnit=null;s.selectedEnemy=null;s.units=unitDefs.map((d,i)=>({id:d.id+'-'+i,type:d.id,name:d.name,icon:d.icon,hp:d.hp*s.up[d.id],maxHp:d.hp*s.up[d.id],damage:d.damage*s.up[d.id],pos:[48,56,57][i],moved:false,attacked:false}));s.activeUnit=0;s.enemies=boss?[{name:'Теодор',icon:'🛡️',hp:s.bossHp,maxHp:s.bossHp,damage:28,pos:14,boss:true},{name:'Охрана',icon:'🎖️',hp:55,maxHp:55,damage:12,pos:21},{name:'Пехота',icon:'🪖',hp:45,maxHp:45,damage:10,pos:13}]:[{name:'Пехота противника',icon:'🪖',hp:55+10*s.sector,maxHp:55+10*s.sector,damage:12,pos:14},{name:'Разведчик',icon:'🔭',hp:45+8*s.sector,maxHp:45+8*s.sector,damage:10,pos:21},{name:'Бронемашина',icon:'🚙',hp:70+12*s.sector,maxHp:70+12*s.sector,damage:15,pos:13}];$('battleTitle').textContent=boss?'БОЙ С ТЕОДОРОМ':'ОПЕРАЦИЯ «'+fronts[s.front].nodes[s.sector%fronts[s.front].nodes.length]+'»';note('Отряд готов. Выбери карточку бойца, затем режим действия. Перемещение — свободная клетка до 2 шагов; атака — враг в радиусе 2. Заверши ход для ответа противника.');renderField();renderUnits();save()}
+function dist(a,b){return Math.abs(a%8-b%8)+Math.abs(Math.floor(a/8)-Math.floor(b/8))}function cellClick(i){if(!s.battleStarted)startBattle();let u=s.units[s.activeUnit];if(!u||u.hp<=0)return;let e=s.enemies.find(x=>x.hp>0&&x.pos===i);if(s.mode==='attack'||e){if(!e){note('В этой клетке нет противника. Выбери клетку с врагом.');return}if(u.attacked){note('Этот отряд уже атаковал в текущем ходу. Выбери другой отряд или заверши ход.');return}if(dist(u.pos,e.pos)>2){note('Противник слишком далеко для этой атаки. Перемести отряд ближе.');return}if(s.ammo<1){note('Не хватает боеприпасов! Открой арсенал.');return}s.ammo=Math.max(0,s.ammo-1);u.attacked=true;e.hp-=u.damage;if(e.boss){s.bossHp=Math.max(0,e.hp)}note(`${u.name} атакует: ${e.name}, урон ${u.damage}.`);if(e.hp<=0){s.kills++;s.parts+=8;note(`Противник уничтожен! +8 деталей.`)}if(!s.enemies.some(x=>x.hp>0)){victory();return}renderField();renderUnits();render();save();return}if(s.mode==='move'){if(u.moved){note('Этот отряд уже перемещался в текущем ходу. Выбери другой отряд или заверши ход.');return}if(e){note('Клетка занята врагом. Переключись в режим атаки.');return}if(dist(u.pos,i)>2){note('За один ход можно переместиться не дальше чем на 2 клетки.');return}if(s.units.some(x=>x!==u&&x.hp>0&&x.pos===i)){note('Клетка занята твоим отрядом.');return}u.pos=i;u.moved=true;s.mode='attack';note(u.name+' переместился. Теперь можно атаковать врага или выбрать другой отряд.');renderField();renderUnits();save()}}
+function enemyTurn(){addLog('Ход противника');let targetedThisTurn=new Set();s.enemies.filter(e=>e.hp>0).forEach(e=>{let target=s.units.filter(u=>u.hp>0).sort((a,b)=>dist(e.pos,a.pos)-dist(e.pos,b.pos)).find(u=>!targetedThisTurn.has(u.id));if(!target)return;targetedThisTurn.add(target.id);if(dist(e.pos,target.pos)<=2){target.hp=Math.max(0,target.hp-e.damage);note(`${e.name} атакует ${target.name}: −${e.damage} здоровья.`)}else{let candidates=[e.pos-8,e.pos+8,...(e.pos%8>0?[e.pos-1]:[]),...(e.pos%8<7?[e.pos+1]:[])].filter(p=>p>=0&&p<64&&dist(p,target.pos)<dist(e.pos,target.pos)&&!s.enemies.some(x=>x!==e&&x.hp>0&&x.pos===p)&&!s.units.some(x=>x.hp>0&&x.pos===p));if(candidates.length)e.pos=candidates[0]}});if(!s.units.some(u=>u.hp>0)){s.battleStarted=false;s.units.forEach(u=>u.hp=Math.max(0,u.hp));s.enemies=[];s.activeUnit=0;note('Все отряды потеряли боеспособность. Бой проигран. Вернись в штаб, пополни снабжение и попробуй снова.');addReward('Отступление','Бой проигран; можно попробовать снова');}else{s.turn++;s.units.forEach(u=>{u.moved=false;u.attacked=false});s.mode='move';if(s.food>0)s.food=Math.max(0,s.food-1);if(s.turn%3===0&&s.fuel>0)s.fuel=Math.max(0,s.fuel-1);if(s.meds>0&&s.turn%2===0){let hurt=s.units.find(u=>u.hp>0&&u.hp<u.maxHp);if(hurt){hurt.hp=Math.min(hurt.maxHp,hurt.hp+5);s.meds--;note('Противник ответил. Медслужба восстановила 5 здоровья отряду '+hurt.name+'.')}else note('Противник ответил. Потерь нет; медикаменты не расходовались.')}else note('Противник ответил. Выбери следующий ход.')}renderField();renderUnits();render();save()}
+function victory(){if(s.victoryProcessed)return;addLog('Победа в сражении');s.victoryProcessed=true;if(!s.battleStarted)return;let boss=s.enemies.some(e=>e.boss);let global=s.front*6+(s.sector%fronts[s.front].nodes.length);let alreadyWon=!boss&&s.won.includes(global);s.battleStarted=false;s.enemies.forEach(e=>{if(e.hp<0)e.hp=0});if(boss){s.bossWon=true;s.bossHp=0;s.glory+=25;s.parts+=50;gainXP(500);addReward('Теодор побеждён','+500 XP, +25 славы, +50 деталей');note('ПОБЕДА! Теодор разбит. Получено: 500 XP, 25 славы и 50 деталей.')}else{if(!alreadyWon){s.won.push(global);s.glory+=10;s.parts+=25;s.ammo+=5;gainXP(120);s.missionsDone++;addReward('Сектор захвачен','+120 XP, +10 славы, +25 деталей, +5 патронов')}else{addReward('Повторная операция','Сектор уже был захвачен; повторная награда не начислена')}s.unlocked=Math.max(s.unlocked??0,global+1);s.front=Math.min(fronts.length-1,Math.floor(s.unlocked/6));s.sector=s.unlocked%6;if(s.unlocked>0&&s.unlocked%6===0){addReward('Новый фронт','Открыт фронт «'+fronts[s.front].name+'»')}note(alreadyWon?'ВРАГ РАЗГРОМЛЕН! Сектор уже был захвачен: повторная награда не начислена.':'ВРАГ РАЗГРОМЛЕН! +120 XP, +10 славы, +25 деталей и +5 патронов.')}save();render()}
 
-const weapons = [
-  {name:"Старая винтовка",damage:15},
-  {name:"Армейский автомат",damage:25}
-];
-const armors = [
-  {name:"Полевой жилет",defense:2},
-  {name:"Усиленный бронежилет",defense:5}
-];
-
-function save() {
-  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-}
-function load() {
-  try {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) state = {...initialState,...JSON.parse(saved)};
-  } catch (e) {
-    state = {...initialState};
-  }
-}
-function logMessage(message) {
-  const el = document.getElementById("log");
-  el.innerHTML = message + "<br>" + el.innerHTML;
-}
-function showScreen(screen) {
-  if (inBattle && screen !== "battle") return;
-  document.querySelectorAll(".screen").forEach(el => el.classList.add("hidden"));
-  document.getElementById(screen).classList.remove("hidden");
-  document.querySelectorAll(".tabs button").forEach(btn =>
-    btn.classList.toggle("active", btn.dataset.screen === screen));
-  render();
-}
-function render() {
-  const maxHp = 100;
-  const nextEnemy = getNextEnemy();
-  document.getElementById("previewEnemyName").textContent = nextEnemy.name;
-  document.getElementById("previewEnemyIcon").textContent = nextEnemy.icon;
-  document.getElementById("previewEnemyDescription").textContent = nextEnemy.description;
-  document.getElementById("previewEnemyHp").textContent = nextEnemy.maxHp;
-  document.getElementById("previewEnemyDamage").textContent = nextEnemy.damage;
-  document.getElementById("previewEnemyCoins").textContent = nextEnemy.rewardCoins;
-  document.getElementById("previewEnemyXp").textContent = nextEnemy.rewardXp;
-  document.getElementById("level").textContent = state.level;
-  document.getElementById("xpText").textContent = `${state.xp} / ${state.level*100}`;
-  document.getElementById("xpBar").style.width = `${Math.min(100,state.xp/(state.level*100)*100)}%`;
-  document.getElementById("coins").textContent = state.coins;
-  document.getElementById("hpText").textContent = `${state.hp} / ${maxHp}`;
-  document.getElementById("hpBar").style.width = `${state.hp/maxHp*100}%`;
-  document.getElementById("energyText").textContent = `${state.energy} / 5`;
-  document.getElementById("energyBar").style.width = `${state.energy/5*100}%`;
-  document.getElementById("rank").textContent = state.level>=5?"Ветеран":state.level>=3?"Ефрейтор":"Рядовой";
-  document.getElementById("weaponName").textContent = weapons[state.weapon].name;
-  document.getElementById("weaponDamage").textContent = weapons[state.weapon].damage;
-  document.getElementById("armorName").textContent = armors[state.armor].name;
-  document.getElementById("armorDefense").textContent = armors[state.armor].defense;
-  document.getElementById("invWeapon").textContent = weapons[state.weapon].name;
-  document.getElementById("invArmor").textContent = armors[state.armor].name;
-  document.getElementById("medkits").textContent = state.medkits;
-  document.getElementById("weaponBuy").disabled = state.weapon>=1 || state.coins<weapons[1].price;
-  document.getElementById("weaponBuy").textContent = state.weapon>1?"ПРЕЙДЕНО":state.weapon===1?"КУПЛЕНО":"КУПИТЬ";
-  document.getElementById("weaponBuy2").disabled = state.weapon>=2 || state.coins<weapons[2].price;
-  document.getElementById("weaponBuy2").textContent = state.weapon>=2?"КУПЛЕНО":state.weapon===1?"УЛУЧШИТЬ":"КУПИТЬ";
-  document.getElementById("armorBuy").disabled = state.armor>=1 || state.coins<armors[1].price;
-  document.getElementById("armorBuy").textContent = state.armor>1?"ПРЕЙДЕНО":state.armor===1?"КУПЛЕНО":"КУПИТЬ";
-  document.getElementById("armorBuy2").disabled = state.armor>=2 || state.coins<armors[2].price;
-  document.getElementById("armorBuy2").textContent = state.armor>=2?"КУПЛЕНО":state.armor===1?"УЛУЧШИТЬ":"КУПИТЬ";
-  document.getElementById("taskOneStatus").textContent = state.taskOne?"Выполнено ✓":"Награда: 50 монет";
-  document.getElementById("taskTwoStatus").textContent = state.taskTwo?"Выполнено ✓":"Награда: 100 монет";
-}
-const enemyTypes = [
-  {
-    name:"Разведчик противника", icon:"👤",
-    description:"Лёгкий противник. Хороший выбор для первых вылазок.",
-    hp:50, damage:12, rewardCoins:40, rewardXp:50
-  },
-  {
-    name:"Штурмовик противника", icon:"🎖️",
-    description:"Более выносливый враг с сильной ответной атакой.",
-    hp:70, damage:15, rewardCoins:55, rewardXp:65
-  },
-  {
-    name:"Ветеран противника", icon:"☠️",
-    description:"Опасный опытный боец. Награда выше, но и риск больше.",
-    hp:90, damage:18, rewardCoins:75, rewardXp:80
-  }
-];
-
-function getNextEnemy() {
-  const tier = Math.min(enemyTypes.length - 1, Math.floor(state.wins / 3));
-  const template = enemyTypes[tier];
-  const scaling = Math.max(0, state.level - 1) * 5;
-  return {
-    ...template,
-    maxHp: template.hp + scaling,
-    hp: template.hp + scaling,
-    damage: template.damage + Math.floor(Math.max(0, state.level - 1) / 2)
-  };
-}
-
-function startBattle() {
-  if (state.energy<1) {
-    alert("Недостаточно энергии. Вернись позже.");
-    return;
-  }
-  state.energy--;
-  enemy = getNextEnemy();
-
-  inBattle = true;
-  battleEnded = false;
-  document.getElementById("enemyName").textContent = enemy.name;
-  document.getElementById("battleLog").textContent =
-    `${enemy.name} появился на поле боя. Его здоровье: ${enemy.maxHp}. Атакуй или отступи.`;
-  document.getElementById("attackBtn").disabled = false;
-  showScreen("battle");
-  renderBattle();
-  save();
-}
-function renderBattle() {
-  if (!enemy) return;
-  document.getElementById("battlePlayerHp").textContent = `Здоровье: ${state.hp} / 100`;
-  document.getElementById("battlePlayerBar").style.width = `${state.hp}%`;
-  document.getElementById("enemyHp").textContent = `Здоровье: ${Math.max(0,enemy.hp)} / ${enemy.maxHp}`;
-  document.getElementById("enemyBar").style.width = `${Math.max(0,enemy.hp)/enemy.maxHp*100}%`;
-}
-function battleMessage(message) {
-  const el = document.getElementById("battleLog");
-  el.innerHTML = message + "<br>" + el.innerHTML;
-}
-function attack() {
-  if (!inBattle || battleEnded) return;
-
-  // Небольшой разброс урона делает каждый удар немного разным.
-  const baseDamage = weapons[state.weapon].damage;
-  const critical = Math.random() < 0.15;
-  const damage = Math.round(baseDamage * (0.85 + Math.random() * 0.3) * (critical ? 1.7 : 1));
-  enemy.hp = Math.max(0, enemy.hp - damage);
-  battleMessage(critical
-    ? `Критический удар! Ты нанёс ${damage} урона.`
-    : `Ты нанёс ${damage} урона.`);
-
-  if (enemy.hp <= 0) {
-    battleEnded = true;
-    inBattle = false;
-    state.wins++;
-    state.coins += enemy.rewardCoins;
-    state.xp += enemy.rewardXp;
-    state.hp = Math.min(100, state.hp + 10);
-    battleMessage(`Победа! Награда: ${enemy.rewardCoins} монет, ${enemy.rewardXp} опыта. +10 здоровья.`);
-    checkLevel();
-    checkTasks();
-    document.getElementById("attackBtn").disabled = true;
-    renderBattle();
-    render();
-    save();
-    return;
-  }
-
-  const rawDamage = Math.max(1, enemy.damage - armors[state.armor].defense);
-  const received = Math.max(1, Math.round(rawDamage * (0.85 + Math.random() * 0.3)));
-  state.hp = Math.max(0, state.hp - received);
-  battleMessage(`${enemy.name} атакует в ответ и наносит ${received} урона.`);
-
-  if (state.hp <= 0) {
-    state.hp = 50;
-    battleEnded = true;
-    inBattle = false;
-    battleMessage("Боец выведен из строя. Медики вернули тебя на базу с 50 здоровьем.");
-    document.getElementById("attackBtn").disabled = true;
-    setTimeout(() => showScreen("profile"), 800);
-  }
-
-  renderBattle();
-  render();
-  save();
-}
-function retreat() {
-  if (!inBattle) {
-    showScreen("profile");
-    return;
-  }
-  inBattle=false;
-  battleEnded=true;
-  logMessage("Ты отступил с поля боя. Энергия за вылазку не возвращена.");
-  showScreen("profile");
-  save();
-}
-function checkLevel() {
-  while (state.xp>=state.level*100) {
-    state.xp-=state.level*100;
-    state.level++;
-    state.coins+=25;
-    logMessage(`Повышен уровень! Теперь твой уровень: ${state.level}. Бонус: 25 монет.`);
-  }
-}
-function checkTasks() {
-  if (!state.taskOne && state.wins>=1) {
-    state.taskOne=true;
-    state.coins+=50;
-    logMessage("Задание выполнено: первый бой. Бонус: 50 монет.");
-  }
-  if (!state.taskTwo && state.level>=2) {
-    state.taskTwo=true;
-    state.coins+=100;
-    logMessage("Задание выполнено: опытный боец. Бонус: 100 монет.");
-  }
-}
-function buyWeapon(level) {
-  if (level !== state.weapon + 1 || !weapons[level] || state.coins < weapons[level].price) return;
-  state.coins -= weapons[level].price;
-  state.weapon = level;
-  logMessage(`Получено новое оружие: ${weapons[level].name}. Урон: ${weapons[level].damage}.`);
-  render(); save();
-}
-function buyArmor(level) {
-  if (level !== state.armor + 1 || !armors[level] || state.coins < armors[level].price) return;
-  state.coins -= armors[level].price;
-  state.armor = level;
-  logMessage(`Новая броня: ${armors[level].name}. Защита: ${armors[level].defense}.`);
-  render(); save();
-}
-function buyMedkit() {
-  if (state.coins<25) { alert("Недостаточно монет."); return; }
-  state.coins-=25; state.medkits++;
-  logMessage("Ты купил аптечку.");
-  render(); save();
-}
-function useMedkit() {
-  if (state.medkits<1) { alert("Аптечек нет."); return; }
-  if (state.hp>=100) { alert("Здоровье уже полное."); return; }
-  state.medkits--; state.hp=Math.min(100,state.hp+30);
-  logMessage("Использована аптечка. Восстановлено до 30 здоровья.");
-  render(); save();
-}
-load();
-render();
-</script>
-</body>
-</html>
+function renderUpgrades(){$('upgradeCards').innerHTML=unitDefs.map(d=>{let lvl=s.up[d.id],cost=d.cost*lvl;return `<article class="card"><div class="itemicon">${d.icon}</div><h3>${d.name}</h3><p>Уровень: ${lvl}</p><p>Урон: ${d.damage*lvl}</p><p>Здоровье: ${d.hp*lvl}</p><button data-up="${d.id}" ${s.parts<cost?'disabled':''}>УЛУЧШИТЬ · ${cost} деталей</button></article>`}).join('')}
+const goods=[{id:'ammo',name:'Боеприпасы',icon:'▣',amount:15,cost:10},{id:'food',name:'Продовольствие',icon:'🥫',amount:10,cost:8},{id:'fuel',name:'Топливо',icon:'⛽',amount:8,cost:10},{id:'meds',name:'Медикаменты',icon:'✚',amount:8,cost:12},{id:'parts',name:'Детали',icon:'⚙',amount:25,cost:20}];function renderShop(){$('shop').innerHTML=goods.map(g=>`<article class="card"><div class="itemicon">${g.icon}</div><h3>${g.name}</h3><p>Получишь: +${g.amount}</p><p>Цена: ${g.cost} славы</p><button data-buy="${g.id}" ${s.glory<g.cost?'disabled':''}>КУПИТЬ</button></article>`).join('')}
+function renderRewards(){$('rewardList').innerHTML=s.rewards.length?s.rewards.map(r=>`<article class="card"><h3>★ ${r.title}</h3><p>${r.desc}</p><small class="muted">${r.date}</small></article>`).join(''):'<div class="card">Пока наград нет. Победи в первой операции!</div>'}
+function renderMissions(){let ms=[{id:'first',title:'Первый бой',desc:'Захвати один сектор',done:s.won.length>=1,reward:'15 славы',claim:()=>s.glory+=15},{id:'kills',title:'Зачистка',desc:'Уничтожь 3 противников',done:s.kills>=3,reward:'20 деталей',claim:()=>s.parts+=20},{id:'upgrade',title:'Вооружение',desc:'Улучши любой отряд до 2 уровня',done:Object.values(s.up).some(x=>x>=2),reward:'10 славы',claim:()=>s.glory+=10},{id:'boss',title:'Охота на босса',desc:'Победи Теодора',done:s.bossWon,reward:'30 деталей',claim:()=>s.parts+=30}];$('missionList').innerHTML=ms.map(m=>`<article class="card"><h3>${m.done?'✓':'☷'} ${m.title}</h3><p>${m.desc}</p><p class="muted">Награда: ${m.reward}</p><button data-claim="${m.id}" ${!m.done||s.claimed.includes(m.id)?'disabled':''}>${s.claimed.includes(m.id)?'ПОЛУЧЕНО':m.done?'ЗАБРАТЬ':'ВЫПОЛНИ ЗАДАНИЕ'}</button></article>`).join('')}
+function renderBoss(){$('bossHpText').textContent=Math.max(0,s.bossHp)+' / 1000';$('bossHpBar').style.width=Math.max(0,s.bossHp)/10+'%';$('fightBoss').disabled=s.bossWon}
+document.addEventListener('click',e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.screen)go(b.dataset.screen);if(b.dataset.front!==undefined){let n=+b.dataset.front;if(n<=Math.min(4,Math.floor((s.unlocked??s.sector)/6))){s.front=n;s.sector=Math.min(5,Math.max(0,(s.unlocked??0)-n*6));save()}}if(b.dataset.node!==undefined){let n=+b.dataset.node,global=s.front*6+n;if(global<=(s.unlocked??s.sector)){s.sector=n;s.saveFront=s.front;save();render()}}if(b.dataset.unit!==undefined){s.activeUnit=Math.max(0,Math.min(s.units.length-1,+b.dataset.unit||0));renderUnits()}if(b.dataset.cell!==undefined)cellClick(+b.dataset.cell);if(b.dataset.up){let d=unitDefs.find(x=>x.id===b.dataset.up),lvl=Number(s.up[d.id]||1),cost=d.cost*lvl;if(lvl>=10){note('Достигнут максимальный уровень этого отряда.');return}if(s.parts>=cost){s.parts-=cost;s.up[d.id]=lvl+1;addReward('Улучшение: '+d.name,'Уровень '+s.up[d.id]);addLog('Улучшен отряд «'+d.name+'» до уровня '+s.up[d.id]+' за '+cost+' деталей');note('Улучшение куплено. Новые отряды получат повышенные характеристики.');save()}else{note('Не хватает деталей: нужно '+cost+'.')}}if(b.dataset.buy){let g=goods.find(x=>x.id===b.dataset.buy);if(!g)return;if(s.glory>=g.cost){s.glory-=g.cost;s[g.id]+=g.amount;addLog('Куплено: '+g.name+' +'+g.amount+' за '+g.cost+' славы');note('Получено: '+g.name+' +'+g.amount);save()}else{note('Не хватает славы: нужно '+g.cost+'.')}}if(b.dataset.claim){let id=b.dataset.claim;if(s.claimed.includes(id))return;let acts={first:()=>s.glory+=15,kills:()=>s.parts+=20,upgrade:()=>s.glory+=10,boss:()=>s.parts+=30};let eligible={first:s.won.length>=1,kills:s.kills>=3,upgrade:Object.values(s.up).some(x=>x>=2),boss:s.bossWon};if(eligible[id]){acts[id]();s.claimed.push(id);addReward('Задание выполнено','Награда получена');addLog('Получена награда за задание: '+id);save()}}if(b.id==='startMission'){if(s.unlocked>=30){note('Кампания завершена: захвачены все 30 секторов.');return}let global=s.front*6+s.sector;if(global>(s.unlocked??0)){note('Этот сектор пока закрыт. Сначала захвати предыдущий.');return}if(s.battleStarted&&s.enemies.some(x=>x.hp>0)){go('battle')}else{s.battleStarted=false;s.enemies=[];s.units=[];startBattle(false);go('battle')} }if(b.id==='moveMode'){s.mode='move';note('Режим перемещения: выбери своего бойца, затем свободную клетку в пределах двух шагов.')}if(b.id==='attackMode'){s.mode='attack';note('Режим атаки: выбери отряд, затем клетку противника рядом.')}if(b.id==='endTurn'){if(!s.battleStarted)return;enemyTurn()}if(b.id==='retreat'){s.battleStarted=false;s.enemies=[];s.units=[];s.activeUnit=0;s.ammo=Math.max(0,s.ammo-2);note('Отступление. Потеряно 2 боеприпаса. Можно вернуться в штаб и подготовиться.');addLog('Отряд отступил; потеряно 2 боеприпаса');save();go('hq')}if(b.id==='fightBoss'){if(s.bossWon)return;if(s.bossHp<=0)s.bossHp=1000;s.sector=Math.max(0,Math.min(5,s.sector));s.battleStarted=false;startBattle(true);go('battle')}if(b.id==='weakenBoss'){if(s.parts>=30&&!s.bossWon){s.parts-=30;s.bossHp=Math.max(250,s.bossHp-200);addReward('Ослабление Теодора','Прочность босса снижена');addLog('Теодор ослаблен: −200 прочности за 30 деталей');save()}}if(b.dataset.action==='escort'){let cost=s.escort*25;if(s.parts>=cost){s.parts-=cost;s.escort++;addReward('Сопровождение улучшено','Уровень '+s.escort);save()}}if(b.id==='exportSave'){let blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='v-okope-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}if(b.id==='importSave')$('saveFile').click();if(b.id==='helpBtn')alert('КАК ИГРАТЬ\n1. Открой фронты и начни операцию.\n2. Выбери отряд внизу поля.\n3. Нажми «Перемещение» и выбери свободную клетку рядом.\n4. Нажми «Атака» и выбери клетку врага рядом.\n5. Заверши ход, чтобы противник ответил.\n6. Нажми «Завершить ход», чтобы противник атаковал.\n7. Если отряды проиграли, вернись в штаб, пополни боеприпасы и начни операцию заново.\n8. Побеждай, получай награды и улучшай отряды.\nПрогресс сохраняется в localStorage этого браузера для этого HTML-файла. Очистка данных браузера может удалить сохранение.');if(b.id==='reset'){if(confirm('Сбросить весь прогресс этой игры?')){s=initial();save();go('hq')}}});
+$('saveFile').addEventListener('change',async ev=>{let f=ev.target.files&&ev.target.files[0];if(!f)return;try{let data=JSON.parse(await f.text());
+if(!validateImportedState(data)){toast('Сохранение повреждено или несовместимо');return;}if(!data||typeof data!=='object'||Array.isArray(data)||!Array.isArray(data.won)||!data.up||typeof data.up!=='object')throw new Error('Неверный формат сохранения');if(!confirm('Заменить текущий прогресс данными из файла?'))return;s={...initial(),...data};s.log=Array.isArray(s.log)?s.log.slice(0,30):[];delete s.equipmentOwned;delete s.loadout;s.front=Math.max(0,Math.min(4,Number(s.front)||0));s.sector=Math.max(0,Math.min(5,Number(s.sector)||0));s.unlocked=Math.max(0,Math.min(30,Number(s.unlocked)||0));s.won=Array.isArray(s.won)?s.won:[];s.rewards=Array.isArray(s.rewards)?s.rewards:[];s.claimed=Array.isArray(s.claimed)?s.claimed:[];s.up={...initial().up,...(s.up||{})};['glory','parts','ammo','food','fuel','meds','level','xp','escort','kills','missionsDone'].forEach(k=>{s[k]=Math.max(0,Number(s[k])||0)});s.bossHp=Math.max(0,Math.min(1000,Number.isFinite(Number(s.bossHp))?Number(s.bossHp):1000));if(!Array.isArray(s.rewards))s.rewards=[];if(!Array.isArray(s.claimed))s.claimed=[];if(!Array.isArray(s.units)||!Array.isArray(s.enemies)){s.units=[];s.enemies=[];s.battleStarted=false}save();go('hq');alert('Сохранение загружено.')}catch(err){alert('Не удалось загрузить сохранение: файл повреждён или имеет неверный формат.')}finally{ev.target.value=''}});render();
+})();
+</script><div style="position:fixed;right:10px;bottom:10px;z-index:9999;display:flex;gap:6px"><button onclick="showLog()" style="padding:7px 10px;background:#2d3945;color:#fff;border:1px solid #73808c;border-radius:6px;cursor:pointer">Журнал</button><button onclick="runSelfCheck()" style="padding:7px 10px;background:#2d3945;color:#fff;border:1px solid #73808c;border-radius:6px;cursor:pointer">Самопроверка игры</button></div></body></html>
