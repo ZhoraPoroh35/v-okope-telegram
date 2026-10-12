@@ -293,11 +293,28 @@ function startBattle() {
     return;
   }
   state.energy--;
-  enemy = {hp:50,maxHp:50,damage:12,name:"Разведчик противника"};
+
+  // Противники становятся сильнее по мере побед и роста уровня.
+  const enemies = [
+    {name:"Разведчик противника", hp:50, damage:12, rewardCoins:40, rewardXp:50},
+    {name:"Штурмовик противника", hp:70, damage:15, rewardCoins:55, rewardXp:65},
+    {name:"Ветеран противника", hp:90, damage:18, rewardCoins:75, rewardXp:80}
+  ];
+  const tier = Math.min(enemies.length - 1, Math.floor(state.wins / 3));
+  const template = enemies[tier];
+  const scaling = Math.max(0, state.level - 1) * 5;
+  enemy = {
+    ...template,
+    maxHp: template.hp + scaling,
+    hp: template.hp + scaling,
+    damage: template.damage + Math.floor(Math.max(0, state.level - 1) / 2)
+  };
+
   inBattle = true;
   battleEnded = false;
   document.getElementById("enemyName").textContent = enemy.name;
-  document.getElementById("battleLog").textContent = "Бой начался! Выбери действие.";
+  document.getElementById("battleLog").textContent =
+    `${enemy.name} появился на поле боя. Его здоровье: ${enemy.maxHp}. Атакуй или отступи.`;
   document.getElementById("attackBtn").disabled = false;
   showScreen("battle");
   renderBattle();
@@ -316,37 +333,47 @@ function battleMessage(message) {
 }
 function attack() {
   if (!inBattle || battleEnded) return;
-  const damage = weapons[state.weapon].damage;
-  enemy.hp -= damage;
-  battleMessage(`Ты нанёс ${damage} урона.`);
-  if (enemy.hp<=0) {
-    enemy.hp=0;
-    battleEnded=true;
-    inBattle=false;
+
+  // Небольшой разброс урона делает каждый удар немного разным.
+  const baseDamage = weapons[state.weapon].damage;
+  const critical = Math.random() < 0.15;
+  const damage = Math.round(baseDamage * (0.85 + Math.random() * 0.3) * (critical ? 1.7 : 1));
+  enemy.hp = Math.max(0, enemy.hp - damage);
+  battleMessage(critical
+    ? `Критический удар! Ты нанёс ${damage} урона.`
+    : `Ты нанёс ${damage} урона.`);
+
+  if (enemy.hp <= 0) {
+    battleEnded = true;
+    inBattle = false;
     state.wins++;
-    state.coins+=40;
-    state.xp+=50;
-    state.hp=Math.min(100,state.hp+10);
-    battleMessage("Победа! Награда: 40 монет, 50 опыта. +10 здоровья.");
+    state.coins += enemy.rewardCoins;
+    state.xp += enemy.rewardXp;
+    state.hp = Math.min(100, state.hp + 10);
+    battleMessage(`Победа! Награда: ${enemy.rewardCoins} монет, ${enemy.rewardXp} опыта. +10 здоровья.`);
     checkLevel();
     checkTasks();
-    document.getElementById("attackBtn").disabled=true;
+    document.getElementById("attackBtn").disabled = true;
     renderBattle();
     render();
     save();
     return;
   }
-  const received = Math.max(1,enemy.damage-armors[state.armor].defense);
-  state.hp=Math.max(0,state.hp-received);
-  battleMessage(`Противник нанёс ${received} урона.`);
-  if (state.hp<=0) {
-    state.hp=50;
-    battleEnded=true;
-    inBattle=false;
+
+  const rawDamage = Math.max(1, enemy.damage - armors[state.armor].defense);
+  const received = Math.max(1, Math.round(rawDamage * (0.85 + Math.random() * 0.3)));
+  state.hp = Math.max(0, state.hp - received);
+  battleMessage(`${enemy.name} атакует в ответ и наносит ${received} урона.`);
+
+  if (state.hp <= 0) {
+    state.hp = 50;
+    battleEnded = true;
+    inBattle = false;
     battleMessage("Боец выведен из строя. Медики вернули тебя на базу с 50 здоровьем.");
-    document.getElementById("attackBtn").disabled=true;
-    setTimeout(()=>showScreen("profile"),800);
+    document.getElementById("attackBtn").disabled = true;
+    setTimeout(() => showScreen("profile"), 800);
   }
+
   renderBattle();
   render();
   save();
