@@ -190,13 +190,23 @@ h3 { font-size:14px; margin:0 0 7px; }
       <p class="muted">Покупай улучшения за монеты.</p>
       <div class="item">
         <div class="item-icon">🔫</div>
-        <div class="item-info"><h3>Армейский автомат</h3><div class="muted">Урон +10 · Цена: 80 монет</div></div>
-        <button class="btn" id="weaponBuy" onclick="buyWeapon()">КУПИТЬ</button>
+        <div class="item-info"><h3>Армейский автомат</h3><div class="muted">Урон: 25 · Цена: 80 монет</div></div>
+        <button class="btn" id="weaponBuy" onclick="buyWeapon(1)">КУПИТЬ</button>
+      </div>
+      <div class="item">
+        <div class="item-icon">🎯</div>
+        <div class="item-info"><h3>Штурмовая винтовка</h3><div class="muted">Урон: 35 · Цена: 180 монет</div></div>
+        <button class="btn" id="weaponBuy2" onclick="buyWeapon(2)">КУПИТЬ</button>
       </div>
       <div class="item">
         <div class="item-icon">🦺</div>
-        <div class="item-info"><h3>Усиленный бронежилет</h3><div class="muted">Защита +3 · Цена: 60 монет</div></div>
-        <button class="btn" id="armorBuy" onclick="buyArmor()">КУПИТЬ</button>
+        <div class="item-info"><h3>Усиленный бронежилет</h3><div class="muted">Защита: 5 · Цена: 60 монет</div></div>
+        <button class="btn" id="armorBuy" onclick="buyArmor(1)">КУПИТЬ</button>
+      </div>
+      <div class="item">
+        <div class="item-icon">🛡️</div>
+        <div class="item-info"><h3>Тактический бронежилет</h3><div class="muted">Защита: 8 · Цена: 150 монет</div></div>
+        <button class="btn" id="armorBuy2" onclick="buyArmor(2)">КУПИТЬ</button>
       </div>
       <div class="item">
         <div class="item-icon">🩹</div>
@@ -294,10 +304,14 @@ function render() {
   document.getElementById("invWeapon").textContent = weapons[state.weapon].name;
   document.getElementById("invArmor").textContent = armors[state.armor].name;
   document.getElementById("medkits").textContent = state.medkits;
-  document.getElementById("weaponBuy").disabled = state.weapon>0 || state.coins<80;
-  document.getElementById("weaponBuy").textContent = state.weapon>0?"КУПЛЕНО":"КУПИТЬ";
-  document.getElementById("armorBuy").disabled = state.armor>0 || state.coins<60;
-  document.getElementById("armorBuy").textContent = state.armor>0?"КУПЛЕНО":"КУПИТЬ";
+  document.getElementById("weaponBuy").disabled = state.weapon>=1 || state.coins<weapons[1].price;
+  document.getElementById("weaponBuy").textContent = state.weapon>1?"ПРЕЙДЕНО":state.weapon===1?"КУПЛЕНО":"КУПИТЬ";
+  document.getElementById("weaponBuy2").disabled = state.weapon>=2 || state.coins<weapons[2].price;
+  document.getElementById("weaponBuy2").textContent = state.weapon>=2?"КУПЛЕНО":state.weapon===1?"УЛУЧШИТЬ":"КУПИТЬ";
+  document.getElementById("armorBuy").disabled = state.armor>=1 || state.coins<armors[1].price;
+  document.getElementById("armorBuy").textContent = state.armor>1?"ПРЕЙДЕНО":state.armor===1?"КУПЛЕНО":"КУПИТЬ";
+  document.getElementById("armorBuy2").disabled = state.armor>=2 || state.coins<armors[2].price;
+  document.getElementById("armorBuy2").textContent = state.armor>=2?"КУПЛЕНО":state.armor===1?"УЛУЧШИТЬ":"КУПИТЬ";
   document.getElementById("taskOneStatus").textContent = state.taskOne?"Выполнено ✓":"Награда: 50 монет";
   document.getElementById("taskTwoStatus").textContent = state.taskTwo?"Выполнено ✓":"Награда: 100 монет";
 }
@@ -438,16 +452,18 @@ function checkTasks() {
     logMessage("Задание выполнено: опытный боец. Бонус: 100 монет.");
   }
 }
-function buyWeapon() {
-  if (state.weapon>0 || state.coins<80) return;
-  state.coins-=80; state.weapon=1;
-  logMessage("Ты купил армейский автомат.");
+function buyWeapon(level) {
+  if (level !== state.weapon + 1 || !weapons[level] || state.coins < weapons[level].price) return;
+  state.coins -= weapons[level].price;
+  state.weapon = level;
+  logMessage(`Получено новое оружие: ${weapons[level].name}. Урон: ${weapons[level].damage}.`);
   render(); save();
 }
-function buyArmor() {
-  if (state.armor>0 || state.coins<60) return;
-  state.coins-=60; state.armor=1;
-  logMessage("Ты купил усиленный бронежилет.");
+function buyArmor(level) {
+  if (level !== state.armor + 1 || !armors[level] || state.coins < armors[level].price) return;
+  state.coins -= armors[level].price;
+  state.armor = level;
+  logMessage(`Новая броня: ${armors[level].name}. Защита: ${armors[level].defense}.`);
   render(); save();
 }
 function buyMedkit() {
